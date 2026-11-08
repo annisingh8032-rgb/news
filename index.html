@@ -32,6 +32,19 @@ input,select{padding:11px 12px;border:1px solid var(--line);border-radius:12px;b
 button{font:inherit;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
 button.p{background:var(--p);border-color:var(--p);color:#fff;font-weight:600}
 @media (prefers-color-scheme:dark){button.p{color:#120f20}}
+button.g{background:#16a34a;border-color:#16a34a;color:#fff;font-weight:600}
+[hidden]{display:none!important}
+.searchbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;display:flex;gap:6px;align-items:center;background:var(--bg);padding:6px 0 10px;margin-bottom:6px}
+.searchbar input{flex:1;min-width:0;margin:0}
+#rfI{display:inline-block}
+.spin{animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.cats{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin:8px 0;-webkit-overflow-scrolling:touch}
+.cats button{white-space:nowrap;border-radius:999px;padding:5px 13px;font-size:.86rem;flex:none}
+.cats button.on{background:#16a34a;border-color:#16a34a;color:#fff}
+button.pc{border-radius:999px;padding:3px 12px;font-size:.84rem}
+.nh a{display:block;color:var(--ink);font-weight:500}.nh .small{margin-top:2px}
+@media (max-width:420px){.rfT{display:none}.nav button{padding:4px 9px}}
 button:disabled{opacity:.6}
 :focus-visible{outline:2px solid var(--p);outline-offset:2px}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row input{flex:1 1 150px;margin:0}
@@ -60,6 +73,7 @@ dialog p{margin:4px 0}
 </head>
 <body>
 <div class="app">
+<div class="searchbar"><input id="q" type="search" placeholder="Khabar search karo (jaise Bihar, cricket, Sensex)" aria-label="Khabar search"><button id="qGo" aria-label="Search">🔍</button><button id="rf" class="g" aria-label="Refresh"><span id="rfI">↻</span><span class="rfT"> Refresh</span></button></div>
 <header class="topbar"><div><div class="hi">Namaste 👋</div><div class="small" id="date"></div></div><div class="logo">SD</div></header>
 <main>
 <section id="t-home" class="tab on">
@@ -68,20 +82,32 @@ dialog p{margin:4px 0}
   <div id="topBox"></div><div id="riskBox"></div>
 </section>
 <section id="t-stocks" class="tab">
-  <div class="panel"><div class="row"><input id="sym" type="text" placeholder="NSE symbol, jaise TCS" autocapitalize="characters" aria-label="Stock symbol"><button id="add">Jodo</button><button id="run" class="p">Refresh</button></div><div class="chips" id="chips"></div><p class="small" id="status"></p></div>
+  <div class="panel"><div class="row"><input id="sym" type="text" placeholder="NSE symbol, jaise TCS" autocapitalize="characters" aria-label="Stock symbol"><button id="add">Jodo</button><button id="run" class="g">Refresh</button></div><div class="chips" id="chips"></div><p class="small" id="status"></p></div>
   <p class="small">Stock ke naam par tap karo, company ki jaankari khulegi.</p>
   <div id="out"></div>
 </section>
-<section id="t-news" class="tab"><h2>Aaj ki headlines</h2><div class="panel" id="newsList">Pehle report banne do.</div></section>
+<section id="t-news" class="tab"><h2 id="nTitle">Aaj ki headlines</h2><div class="cats" id="cats"></div><p class="small" id="nStatus"></p><div class="panel" id="newsList">Khabrein la rahe hain...</div></section>
+<section id="t-suggest" class="tab">
+  <h2>Aaj kya kharidein?</h2>
+  <div class="notice"><b>Sach ye hai:</b> Koi bhi tool 99% pakka nahi bata sakta ki stock upar jayega. Ye sirf trend, RSI, volume aur khabar ke rules par based sanket hai. Paisa doob bhi sakta hai. Bahut sasta (penny) stock aur zyada risky hota hai.</div>
+  <div class="panel">
+    <div class="row"><button id="sgGo" class="g">Suggest karo</button><button id="sgFilter">Filter ▾</button></div>
+    <div id="sgF" hidden>
+      <p class="small">Price range (₹ per share). Jitna budget hai wo Max mein daalo.</p>
+      <div class="row"><input id="pMin" type="number" inputmode="decimal" min="0" placeholder="Min ₹"><input id="pMax" type="number" inputmode="decimal" min="0" placeholder="Max ₹ (jaise 50)"></div>
+      <div class="chips" id="pChips"><button class="pc" data-m="50">₹50 tak</button><button class="pc" data-m="100">₹100 tak</button><button class="pc" data-m="250">₹250 tak</button><button class="pc" data-m="500">₹500 tak</button><button class="pc" data-m="1000">₹1000 tak</button><button class="pc" data-m="">Sab</button></div>
+    </div>
+    <p class="small" id="sgStatus"></p>
+  </div>
+  <div id="sgOut"></div>
+</section>
 <section id="t-report" class="tab">
   <h2>Grok report aur chart (code.gs se)</h2>
-  <div class="panel"><p class="small">code.gs ko Web App deploy karke link aur ACCESS_KEY yahan daalo. Grok key sirf code.gs ke Script Properties mein rehti hai, is page ya GitHub mein nahi.</p>
-    <input id="gUrl" type="text" placeholder="https://script.google.com/macros/s/.../exec" aria-label="Web App link"><input id="gKey" type="password" placeholder="ACCESS_KEY" aria-label="Access key"><button id="gSave">Save</button></div>
   <div class="panel"><div class="row"><button id="gReport" class="p">Grok report lo</button><button id="gPush">Telegram par bhejo</button></div><div id="rOut"></div></div>
   <div class="panel"><h3 style="margin-top:0">Company ka chart record</h3><input id="rSym" type="text" placeholder="Symbol, jaise TCS" autocapitalize="characters"><select id="rRange"><option value="1mo">1 mahina</option><option value="6mo" selected>6 mahine</option><option value="1y">1 saal</option><option value="5y">5 saal</option></select><div class="row"><button id="gChart">Dekho</button><button id="gCsv">CSV download</button></div><div id="cOut"></div></div>
 </section>
 </main>
-<nav class="nav"><button data-t="home" class="on"><span>⌂</span>Home</button><button data-t="stocks"><span>◫</span>Stocks</button><button data-t="news"><span>☰</span>News</button><button data-t="report"><span>✦</span>Report</button></nav>
+<nav class="nav"><button data-t="home" class="on"><span>⌂</span>Home</button><button data-t="stocks"><span>◫</span>Stocks</button><button data-t="news"><span>☰</span>News</button><button data-t="suggest"><span>★</span>Suggest</button><button data-t="report"><span>✦</span>Report</button></nav>
 </div>
 <dialog id="dlg"><div id="dbody"></div><p><button id="dclose" class="p">Band karo</button></p></dialog>
 <script>
@@ -192,7 +218,7 @@ async function run(){
   }));
   results.sort((p,q)=>(q.a?q.a.s:-99)-(p.a?p.a.s:-99));
   summary();
-  $('out').innerHTML=results.map(card).join('');renderNews();
+  $('out').innerHTML=results.map(card).join('');if(nMode.t==='MY'&&!nMode.q)renderNews();
   $('status').textContent='Report taiyaar: '+new Date().toLocaleTimeString('en-IN');
   $('run').disabled=false;
 }
@@ -201,13 +227,13 @@ $('run').onclick=run;
 
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav button,.tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('t-'+b.dataset.t).classList.add('on');scrollTo(0,0)});
 function renderNews(){const h=[];results.forEach(x=>x.news.slice(0,3).forEach(n=>h.push(`<div class="hl"><b>${esc(x.sym)}</b> <a href="${esc(n.link)}" target="_blank" rel="noopener noreferrer">${esc(n.title)}</a></div>`)));$('newsList').innerHTML=h.length?h.join(''):'Koi headline nahi mili.'}
-$('gUrl').value=S.get('gUrl','');$('gKey').value=S.get('gKey','');
-$('gSave').onclick=()=>{S.set('gUrl',$('gUrl').value.trim());S.set('gKey',$('gKey').value.trim());$('rOut').textContent='Save ho gaya.'};
-function gas(p){const u=new URL(S.get('gUrl',''));Object.entries({...p,key:S.get('gKey','')}).forEach(([k,v])=>u.searchParams.set(k,v));return u.toString()}
+const GAS_URL='https://script.google.com/macros/s/AKfycbwrybHYblCLHIuH_z0dgp72YkMSTzXNMRE_gHFZ-FcLyf8a20typQZYW_oChAumIJ1C3A/exec';
+function gKey(){let k=S.get('gKey','');if(!k){k=(prompt('ACCESS_KEY daalo (sirf ek baar poochega):')||'').trim();if(k)S.set('gKey',k)}return k}
+function gas(p,k){const u=new URL(GAS_URL);Object.entries({...p,key:k}).forEach(([a,v])=>u.searchParams.set(a,v));return u.toString()}
 async function gcall(p,box,json){
-  if(!S.get('gUrl','')){box.textContent='Pehle Web App ka link aur key Save karo.';return null}
+  const k=gKey();if(!k){box.textContent='ACCESS_KEY chahiye.';return null}
   box.textContent='Wait karo...';
-  try{const r=await fetch(gas(p));const t=await r.text();box.textContent='';return json?JSON.parse(t):t}catch(e){box.innerHTML='<span class="down">Nahi ho paya: '+esc(e.message)+'</span>';return null}
+  try{const r=await fetch(gas(p,k));const t=await r.text();box.textContent='';if(/unauthori|invalid key|wrong key|forbidden/i.test(t.slice(0,200))){S.set('gKey','');box.innerHTML='<span class="down">ACCESS_KEY galat hai. Dobara try karo, key phir se poochhunga.</span>';return null}return json?JSON.parse(t):t}catch(e){box.innerHTML='<span class="down">Nahi ho paya: '+esc(e.message)+'</span>';return null}
 }
 $('gReport').onclick=async()=>{const t=await gcall({action:'report'},$('rOut'));if(t)$('rOut').innerHTML='<div class="ai">'+esc(t)+'</div>'};
 $('gPush').onclick=async()=>{const t=await gcall({action:'push'},$('rOut'));if(t)$('rOut').textContent=t};
@@ -278,7 +304,84 @@ async function openDetails(sym){
 }
 document.addEventListener('click',e=>{const b=e.target.closest('.lnk[data-s]');if(b)openDetails(b.dataset.s)});
 $('dclose').onclick=()=>$('dlg').close();
-chips();run();
+/* ===== Hindi news ===== */
+const HI='hl=hi&gl=IN&ceid=IN:hi';
+const CATS=[['top','Mukhya Khabar'],['NATION','Desh'],['WORLD','Duniya'],['BUSINESS','Business'],['MARKET','Share Bazaar'],['ENTERTAINMENT','Manoranjan'],['SPORTS','Khel'],['TECHNOLOGY','Tech'],['HEALTH','Sehat'],['SCIENCE','Vigyan'],['MY','Mere Stocks']];
+let nMode={t:'top'},nTok=0;
+function nUrl(m){
+  if(m.q)return `https://news.google.com/rss/search?q=${encodeURIComponent(m.q)}&${HI}`;
+  if(m.t==='top')return `https://news.google.com/rss?${HI}`;
+  if(m.t==='MARKET')return `https://news.google.com/rss/search?q=${encodeURIComponent('शेयर बाजार सेंसेक्स निफ्टी when:2d')}&${HI}`;
+  return `https://news.google.com/rss/headlines/section/topic/${m.t}?${HI}`;
+}
+function ago(d){const m=Math.round((Date.now()-new Date(d))/6e4);if(!(m>=0))return'';if(m<60)return m+' min pehle';if(m<1440)return Math.round(m/60)+' ghante pehle';return Math.round(m/1440)+' din pehle'}
+function cleanT(t,src){t=(t||'').trim();if(src&&t.endsWith(' - '+src))return{title:t.slice(0,-(src.length+3)),src};if(!src){const k=t.lastIndexOf(' - ');if(k>0)return{title:t.slice(0,k),src:t.slice(k+3)}}return{title:t,src:src||''}}
+async function feed(u){
+  for(const p of PROXY){
+    try{const r=await fetch(p(u));if(!r.ok)continue;
+      const x=new DOMParser().parseFromString(await r.text(),'text/xml');
+      const it=[...x.getElementsByTagName('item')];
+      if(it.length)return it.slice(0,40).map(i=>{const g=n=>{const e=i.getElementsByTagName(n)[0];return e?e.textContent:''};const c=cleanT(g('title'),g('source'));return{title:c.title,src:c.src,link:g('link'),date:g('pubDate')}});
+    }catch(e){}
+  }
+  try{const r=await fetch('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(u));const j=await r.json();
+    return(j.items||[]).map(i=>{const c=cleanT(i.title,'');return{title:c.title,src:c.src,link:i.link,date:i.pubDate}})}catch(e){return[]}
+}
+function buildCats(){$('cats').innerHTML=CATS.map(c=>`<button data-c="${c[0]}" class="${!nMode.q&&nMode.t===c[0]?'on':''}">${c[1]}</button>`).join('')}
+$('cats').onclick=e=>{const c=e.target.dataset&&e.target.dataset.c;if(!c)return;nMode={t:c};$('q').value='';buildCats();loadNews()};
+async function loadNews(){
+  const my=++nTok,box=$('newsList');
+  $('nTitle').textContent=nMode.q?'Search: '+nMode.q:'Aaj ki headlines';
+  if(nMode.t==='MY'&&!nMode.q){$('nStatus').textContent='';renderNews();return}
+  box.textContent='Khabrein la rahe hain...';
+  const it=await feed(nUrl(nMode));
+  if(my!==nTok)return;
+  box.innerHTML=it.length?it.map(n=>`<div class="hl nh"><a href="${esc(n.link)}" target="_blank" rel="noopener noreferrer">${esc(n.title)}</a><div class="small">${esc(n.src)}${n.src&&n.date?' • ':''}${esc(ago(n.date))}</div></div>`).join(''):'Khabar nahi mili. Refresh dabao ya thodi der baad try karo.';
+  $('nStatus').textContent=it.length?`${it.length} khabrein • update: ${new Date().toLocaleTimeString('en-IN')}`:'';
+}
+function doSearch(){const q=$('q').value.trim();nMode=q?{q}:{t:'top'};buildCats();document.querySelector('.nav button[data-t="news"]').click();loadNews()}
+$('qGo').onclick=doSearch;$('q').onkeydown=e=>{if(e.key==='Enter')doSearch()};
+
+/* ===== Refresh ===== */
+$('rf').onclick=()=>{
+  const t=document.querySelector('.tab.on').id,i=$('rfI');i.classList.add('spin');
+  const jobs=t==='t-suggest'?[doSuggest(true)]:t==='t-news'?[loadNews()]:[run(),loadNews()];
+  Promise.all(jobs).finally(()=>i.classList.remove('spin'));
+};
+
+/* ===== Suggest ===== */
+const UNI=['SUZLON','YESBANK','IDEA','NHPC','IRFC','PNB','SAIL','BHEL','IOB','UCOBANK','CENTRALBK','MAHABANK','SOUTHBANK','JPPOWER','RPOWER','HUDCO','NMDC','ONGC','COALINDIA','POWERGRID','NTPC','BANKBARODA','CANBK','UNIONBANK','IDFCFIRSTB','FEDERALBNK','TATAPOWER','TATASTEEL','WIPRO','ITC','SBIN','BEL','HAL','RVNL','IRCON','NBCC','SJVN','IEX','GMRAIRPORT','PFC','RECLTD','IOC','BPCL','GAIL','VEDL','HINDALCO','JSWSTEEL','NATIONALUM','HINDCOPPER','INFY','TCS','HDFCBANK','ICICIBANK','AXISBANK','RELIANCE','LT','ASHOKLEY','BANDHANBNK'];
+const NONE={net:0,b:0,g:0,hits:[]};
+let uc={};
+async function pool(arr,n,fn){let i=0;await Promise.all(Array.from({length:n},async()=>{while(i<arr.length){const k=i++;await fn(arr[k])}}))}
+$('pMin').value=S.get('pMin','');$('pMax').value=S.get('pMax','');
+$('sgFilter').onclick=()=>{const h=$('sgF');h.hidden=!h.hidden;$('sgFilter').textContent=h.hidden?'Filter ▾':'Filter ▴'};
+$('pChips').onclick=e=>{const m=e.target.dataset&&e.target.dataset.m;if(m===undefined)return;$('pMin').value='';$('pMax').value=m;doSuggest()};
+$('sgGo').onclick=()=>doSuggest();
+async function doSuggest(force){
+  const mn=parseFloat($('pMin').value)||0,mx=parseFloat($('pMax').value)||Infinity;
+  S.set('pMin',$('pMin').value);S.set('pMax',$('pMax').value);
+  $('sgGo').disabled=true;$('sgOut').innerHTML='';
+  try{
+    const all=[...new Set([...watch,...UNI])],now=Date.now();
+    const need=all.filter(x=>force||!uc[x]||now-uc[x].t>9e5);let done=0;
+    $('sgStatus').textContent=`Stocks scan ho rahe hain: 0/${need.length}`;
+    await pool(need,6,async x=>{const d=await chart(x+'.NS');uc[x]=d?{t:Date.now(),d,a:analyze(d,NONE),liq:sma(d.v,20)}:{t:Date.now(),d:null};$('sgStatus').textContent=`Stocks scan ho rahe hain: ${++done}/${need.length}`});
+    const ok=all.map(x=>({sym:x,...uc[x]})).filter(x=>x.a);
+    const fit=ok.filter(x=>x.a.last>=mn&&x.a.last<=mx);
+    const liquid=fit.filter(x=>(x.liq||0)>=100000);
+    const cand=liquid.filter(x=>x.a.s>=1).sort((p,q)=>q.a.s-p.a.s||q.a.pct-p.a.pct).slice(0,8);
+    $('sgStatus').textContent='Khabrein check ho rahi hain...';
+    const res=await Promise.all(cand.map(async x=>{const n=await news(x.sym);const ns=newsScore(n);return{sym:x.sym,news:n,ns,name:x.sym,a:analyze(x.d,ns)}}));
+    const pick=res.filter(x=>!x.ns.hits.length&&x.a.s>=1).sort((p,q)=>q.a.s-p.a.s).slice(0,5);
+    const rng=(mn||mx<Infinity)?` (₹${fmt(mn)} se ${mx<Infinity?'₹'+fmt(mx):'upar'})`:'';
+    $('sgStatus').textContent=`${ok.length} stock scan hue • ${fit.length} price range mein • ${liquid.length} mein achhi trading • ${cand.length} mein positive sanket • ${new Date().toLocaleTimeString('en-IN')}`;
+    $('sgOut').innerHTML=pick.length?`<h2>Top ${pick.length} sanket${esc(rng)}</h2>`+pick.map((x,i)=>`<div class="small" style="margin:6px 4px"><b>#${i+1}</b>${mx<Infinity?` • ₹${fmt(mx)} mein lagbhag ${Math.floor(mx/x.a.last)} share`:''}</div>`+card(x)).join('')+`<p class="small">Ye pakki bhavishyavani nahi hai. Kharidne se pehle khud jaanch lo.</p>`:`<div class="card"><span class="small">Is price range${esc(rng)} mein aaj koi saaf sanket nahi mila. Jabardasti kharidne ki zaroorat nahi. Range badal ke dekh sakte ho.</span></div>`;
+  }catch(e){$('sgStatus').textContent='Nahi ho paya: '+e.message}
+  $('sgGo').disabled=false;
+}
+
+buildCats();loadNews();chips();run();
 </script>
 </body>
 </html>
