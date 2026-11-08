@@ -116,6 +116,9 @@ dialog p{margin:4px 0}
 </div>
 <dialog id="dlg"><div id="dbody"></div><p><button id="dclose" class="p">Band karo</button></p></dialog>
 <script>
+const _f=window.fetch.bind(window);
+window.fetch=(u,o={})=>{if(String(u).includes('script.google.com'))return _f(u,o);const c=new AbortController(),t=setTimeout(()=>c.abort(),10000);return _f(u,{...o,signal:c.signal}).finally(()=>clearTimeout(t))};
+const tm=(p,ms)=>Promise.race([p,new Promise(r=>setTimeout(()=>r(null),ms))]);
 const $=id=>document.getElementById(id);
 const S={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -289,7 +292,7 @@ async function openDetails(sym){
   const x=results.find(r=>r.sym===sym),name=x?x.name:sym;
   $('dbody').innerHTML=`<h2 style="margin-top:0">${esc(name)} <span class="small">(${esc(sym)})</span></h2><p class="small">Jaankari la rahe hain...</p>`;
   $('dlg').showModal();
-  const [w,h,f]=await Promise.all([wiki(name).catch(()=>null),hist(sym).catch(()=>null),fin(sym).catch(()=>null)]);
+  const [w,h,f]=await Promise.all([tm(wiki(name).catch(()=>null),20000),tm(hist(sym).catch(()=>null),20000),tm(fin(sym).catch(()=>null),20000)]);
   let o=`<h2 style="margin-top:0">${esc(name)} <span class="small">(${esc(sym)})</span></h2>`;
   o+=`<h3>Company kya karti hai</h3>`+(w&&w.text?`<p>${esc(w.text)}</p><p class="small">Source: Wikipedia, "${esc(w.title)}". Page galat company ka lage to ise na maano.</p>`:`<p class="small">Jaankari nahi mili.</p>`);
   o+=`<h3>Kab shuru hui</h3><p>${w&&w.year?'Company ki sthapana: <b>'+esc(w.year)+'</b> (Wikidata)':'Sthapana ka saal nahi mila.'}</p>`;
