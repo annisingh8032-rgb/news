@@ -79,7 +79,12 @@ dialog p{margin:4px 0}
 <section id="t-home" class="tab on">
   <div class="hero"><div class="small">Aaj ka Nifty 50</div><div class="mood" id="mood">Market ka haal la rahe hain...</div></div>
   <div class="notice"><b>Dhyan do:</b> Ye sirf rules par based sanket hai, pakki bhavishyavani nahi. Kharidne se pehle khud jaanch lo. Ye investment salah nahi hai.</div>
+  <h2>Subah ka Brief</h2><div class="panel" id="brief"><span class="small">Brief ban raha hai...</span></div>
   <div id="topBox"></div><div id="riskBox"></div>
+  <h2>Tyohaar ka record</h2>
+  <div class="panel"><p class="small" id="fNext"></p>
+    <div class="row"><select id="fSel" style="flex:1;margin:0"><option>Diwali</option><option>Dussehra</option><option>Holi</option></select><button id="fGo" class="g">Scan karo</button></div>
+    <p class="small" id="fStatus"></p><div id="fOut"></div></div>
 </section>
 <section id="t-stocks" class="tab">
   <div class="panel"><div class="row"><input id="sym" type="text" placeholder="NSE symbol, jaise TCS" autocapitalize="characters" aria-label="Stock symbol"><button id="add">Jodo</button><button id="run" class="g">Refresh</button></div><div class="chips" id="chips"></div><p class="small" id="status"></p></div>
@@ -127,7 +132,7 @@ $('chips').onclick=e=>{const s=e.target.dataset&&e.target.dataset.s;if(!s)return
 function add(){const s=$('sym').value.trim().toUpperCase().replace(/\.NS$/,'').replace(/[^A-Z0-9&-]/g,'');if(s&&!watch.includes(s)){watch.push(s);S.set('watch',JSON.stringify(watch));chips()}$('sym').value=''}
 $('add').onclick=add;$('sym').onkeydown=e=>{if(e.key==='Enter')add()};
 
-const PROXY=[u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://corsproxy.io/?'+encodeURIComponent(u)];
+const PROXY=[u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://corsproxy.io/?'+encodeURIComponent(u),u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)];
 async function chart(t,range='4mo',iv='1d'){
   const url=`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(t)}?interval=${iv}&range=${range}`;
   for(const p of PROXY){
@@ -345,7 +350,7 @@ $('qGo').onclick=doSearch;$('q').onkeydown=e=>{if(e.key==='Enter')doSearch()};
 /* ===== Refresh ===== */
 $('rf').onclick=()=>{
   const t=document.querySelector('.tab.on').id,i=$('rfI');i.classList.add('spin');
-  const jobs=t==='t-suggest'?[doSuggest(true)]:t==='t-news'?[loadNews()]:[run(),loadNews()];
+  const jobs=t==='t-suggest'?[doSuggest(true)]:t==='t-news'?[loadNews()]:[run(),loadNews(),brief()];
   Promise.all(jobs).finally(()=>i.classList.remove('spin'));
 };
 
@@ -374,14 +379,77 @@ async function doSuggest(force){
     $('sgStatus').textContent='Khabrein check ho rahi hain...';
     const res=await Promise.all(cand.map(async x=>{const n=await news(x.sym);const ns=newsScore(n);return{sym:x.sym,news:n,ns,name:x.sym,a:analyze(x.d,ns)}}));
     const pick=res.filter(x=>!x.ns.hits.length&&x.a.s>=1).sort((p,q)=>q.a.s-p.a.s).slice(0,5);
+    let fb=[];
+    if(!pick.length){const p2=[...(liquid.length?liquid:fit)].sort((p,q)=>q.a.s-p.a.s||q.a.pct-p.a.pct).slice(0,5);
+      fb=await Promise.all(p2.map(async x=>{const n=await news(x.sym);const ns=newsScore(n);return{sym:x.sym,news:n,ns,name:x.sym,a:analyze(x.d,ns)}}))}
     const rng=(mn||mx<Infinity)?` (₹${fmt(mn)} se ${mx<Infinity?'₹'+fmt(mx):'upar'})`:'';
     $('sgStatus').textContent=`${ok.length} stock scan hue • ${fit.length} price range mein • ${liquid.length} mein achhi trading • ${cand.length} mein positive sanket • ${new Date().toLocaleTimeString('en-IN')}`;
-    $('sgOut').innerHTML=pick.length?`<h2>Top ${pick.length} sanket${esc(rng)}</h2>`+pick.map((x,i)=>`<div class="small" style="margin:6px 4px"><b>#${i+1}</b>${mx<Infinity?` • ₹${fmt(mx)} mein lagbhag ${Math.floor(mx/x.a.last)} share`:''}</div>`+card(x)).join('')+`<p class="small">Ye pakki bhavishyavani nahi hai. Kharidne se pehle khud jaanch lo.</p>`:`<div class="card"><span class="small">Is price range${esc(rng)} mein aaj koi saaf sanket nahi mila. Jabardasti kharidne ki zaroorat nahi. Range badal ke dekh sakte ho.</span></div>`;
+    $('sgOut').innerHTML=pick.length?`<h2>Top ${pick.length} sanket${esc(rng)}</h2>`+pick.map((x,i)=>`<div class="small" style="margin:6px 4px"><b>#${i+1}</b>${mx<Infinity?` • ₹${fmt(mx)} mein lagbhag ${Math.floor(mx/x.a.last)} share`:''}</div>`+card(x)).join('')+`<p class="small">Ye pakki bhavishyavani nahi hai. Kharidne se pehle khud jaanch lo.</p>`:(fb.length?`<h2>Koi saaf BUY sanket nahi${esc(rng)}</h2><p class="small">Is range mein aaj kisi stock mein mazboot sanket nahi hai. Neeche sabse behtar 5 hain, par sanket kamzor hai, jaldbaazi mat karo.</p>`+fb.map((x,i)=>`<div class="small" style="margin:6px 4px"><b>#${i+1}</b>${mx<Infinity?` • ₹${fmt(mx)} mein lagbhag ${Math.floor(mx/x.a.last)} share`:''}</div>`+card(x)).join(''):`<div class="card"><span class="small">Is price range${esc(rng)} mein koi stock nahi mila.${ok.length<10?` Sirf ${ok.length} stock ka data aaya, internet ya data source mein dikkat lag rahi hai. Thodi der baad Refresh dabao.`:' Range badal ke dekho.'}</span></div>`);
   }catch(e){$('sgStatus').textContent='Nahi ho paya: '+e.message}
   $('sgGo').disabled=false;
 }
 
-buildCats();loadNews();chips();run();
+/* ===== Subah ka Brief ===== */
+const GL=[['^NSEI','Nifty 50 (pichhla din)',0],['^GSPC','S&P 500 (US)',0],['^IXIC','Nasdaq (US)',0],['^N225','Nikkei (Japan)',0],['CL=F','Crude oil',1],['INR=X','Dollar/₹',1],['^INDIAVIX','India VIX (dar)',1]];
+async function brief(){
+  const box=$('brief');box.innerHTML='<span class="small">Brief ban raha hai...</span>';
+  const [g,a,b]=await Promise.all([Promise.all(GL.map(async x=>{const d=await chart(x[0],'5d','1d');if(!d)return null;const l=d.c[d.c.length-1],p=d.c[d.c.length-2];return{n:x[1],inv:x[2],l,p:(l/p-1)*100,s:x[0]}})),feed(nUrl({t:'top'})),feed(nUrl({t:'BUSINESS'}))]);
+  const m={};g.forEach(x=>{if(x)m[x.s]=x});let sc=0,cnt=0;
+  ['^GSPC','^IXIC','^N225'].forEach(k=>{const x=m[k];if(x){cnt++;if(x.p>0.3)sc++;else if(x.p<-0.3)sc--}});
+  if(m['CL=F']){cnt++;if(m['CL=F'].p>1.5)sc--;else if(m['CL=F'].p<-1.5)sc++}
+  if(m['INR=X']){cnt++;if(m['INR=X'].p>0.3)sc--;else if(m['INR=X'].p<-0.3)sc++}
+  if(m['^INDIAVIX']){cnt++;if(m['^INDIAVIX'].p>5)sc--;else if(m['^INDIAVIX'].p<-5)sc++}
+  let lab,cls;
+  if(cnt<3){lab='Data kam mila, andaza nahi laga paaye';cls='flat'}
+  else if(sc>=2){lab='Opening achhi reh sakti hai';cls='up'}
+  else if(sc<=-2){lab='Opening kamzor reh sakti hai';cls='down'}
+  else{lab='Mila-jula, opening flat ke aas-paas ho sakti hai';cls='flat'}
+  const rows=g.filter(Boolean).map(x=>{const good=x.inv?x.p<0:x.p>=0;return`<tr><td>${esc(x.n)}</td><td>${fmt(x.l)}</td><td class="${good?'up':'down'}">${x.p>=0?'+':''}${x.p.toFixed(2)}%</td></tr>`}).join('');
+  const hl=l=>l.slice(0,4).map(n=>`<div class="hl nh"><a href="${esc(n.link)}" target="_blank" rel="noopener noreferrer">${esc(n.title)}</a><div class="small">${esc(n.src)}${n.src&&n.date?' • ':''}${esc(ago(n.date))}</div></div>`).join('')||'<p class="small">Khabar nahi mili.</p>';
+  box.innerHTML=`<span class="badge ${cls}">${lab}</span><p class="small" style="margin-top:0">Ye andaza sirf kal ke global sanket (US, Japan, crude, dollar, VIX) se hai, pakka nahi. Data pichhle close tak ka hai.</p>`+(rows?`<table class="tbl">${rows}</table>`:'')+`<h3>Mukhya khabrein</h3>${hl(a)}<h3>Business khabrein</h3>${hl(b)}<p class="small">Update: ${new Date().toLocaleTimeString('en-IN')}</p>`;
+}
+
+/* ===== Tyohaar ka record ===== */
+const FEST={
+Diwali:['2016-10-30','2017-10-19','2018-11-07','2019-10-27','2020-11-14','2021-11-04','2022-10-24','2023-11-12','2024-11-01','2025-10-21','2026-11-08','2027-10-29'],
+Dussehra:['2016-10-11','2017-09-30','2018-10-19','2019-10-08','2020-10-25','2021-10-15','2022-10-05','2023-10-24','2024-10-12','2025-10-02','2026-10-20','2027-10-09'],
+Holi:['2016-03-23','2017-03-13','2018-03-02','2019-03-21','2020-03-10','2021-03-29','2022-03-18','2023-03-08','2024-03-25','2025-03-14','2026-03-04','2027-03-22']};
+let hc={};
+function fstat(d,dates){
+  const t=d.tt.map(x=>x*1000),c=d.c,last=t[t.length-1],first=t[0],D=864e5;
+  const at=ms=>{let r=-1;for(let i=0;i<t.length&&t[i]<=ms;i++)r=i;return r};
+  const pre=[],post=[];
+  dates.forEach(ds=>{const f=new Date(ds+'T12:00:00Z').getTime();
+    if(f-15*D>=first+5*D&&f<=last){const a=at(f-15*D),e=at(f);if(a>=0&&e>a)pre.push(c[e]/c[a]-1)}
+    if(f>=first+5*D&&f+10*D<=last){const a=at(f),e=at(f+10*D);if(a>=0&&e>a)post.push(c[e]/c[a]-1)}});
+  const ag=a=>({n:a.length,avg:a.length?a.reduce((x,y)=>x+y,0)/a.length*100:0,win:a.length?a.filter(z=>z>0).length/a.length*100:0});
+  return{pre:ag(pre),post:ag(post)};
+}
+(function(){
+  const now=Date.now();let nx=null;
+  Object.entries(FEST).forEach(([k,L])=>L.forEach(ds=>{const t=new Date(ds+'T12:00:00Z').getTime();if(t>now&&(!nx||t<nx.t))nx={k,t,ds}}));
+  if(nx){$('fNext').textContent=`Agla tyohaar: ${nx.k}, lagbhag ${new Date(nx.t).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})} (${Math.ceil((nx.t-now)/864e5)} din baad). Tyohaar ki tareekhein lagbhag hain.`;$('fSel').value=nx.k}
+})();
+const fcell=r=>r.n?`<span class="${r.avg>=0?'up':'down'}">${r.avg>=0?'+':''}${r.avg.toFixed(1)}%</span> <span class="small">(${r.win.toFixed(0)}% baar badha, ${r.n} saal)</span>`:'<span class="small">-</span>';
+async function fScan(){
+  const fest=$('fSel').value,dates=FEST[fest],all=['^NSEI',...new Set([...watch,...UNI])];
+  $('fGo').disabled=true;$('fOut').innerHTML='';
+  try{
+    const need=all.filter(x=>hc[x]===undefined);let done=0;
+    $('fStatus').textContent=`10 saal ka data aa raha hai: 0/${need.length}`;
+    await pool(need,5,async x=>{hc[x]=await chart(x==='^NSEI'?x:x+'.NS','10y','1d');$('fStatus').textContent=`10 saal ka data aa raha hai: ${++done}/${need.length}`});
+    const rows=all.map(x=>hc[x]?{sym:x,...fstat(hc[x],dates)}:null).filter(r=>r&&r.pre.n>=5);
+    const nf=rows.find(r=>r.sym==='^NSEI'),list=rows.filter(r=>r.sym!=='^NSEI').sort((p,q)=>q.pre.avg-p.pre.avg);
+    const strong=list.filter(r=>r.pre.win>=70&&r.pre.avg>(nf?nf.pre.avg:0));
+    const show=(strong.length?strong:list).slice(0,10);
+    $('fStatus').textContent=`${list.length} stock ka record mila`;
+    $('fOut').innerHTML=`<p class="small">${fest} se 15 din pehle se tyohaar tak ka return, aur tyohaar ke 10 din baad tak ka return.${strong.length?' Neeche wo stock hain jo aksar 70%+ baar badhe aur Nifty se behtar rahe.':' Koi stock 70%+ baar nahi badha, isliye sabse achhe average wale dikha raha hu.'}</p><div style="overflow-x:auto"><table class="tbl"><tr><td class="small">Stock</td><td class="small">Tyohaar tak</td><td class="small">Tyohaar ke baad</td></tr>${nf?`<tr><td><b>Nifty</b></td><td>${fcell(nf.pre)}</td><td>${fcell(nf.post)}</td></tr>`:''}${show.map(r=>`<tr><td><b>${esc(r.sym)}</b></td><td>${fcell(r.pre)}</td><td>${fcell(r.post)}</td></tr>`).join('')}</table></div><p class="small">Dhyan do: 10 saal mein sirf 10 tyohaar hote hain, ye bahut kam sample hai. Purana record hai, aage aisa hoga ye zaroori nahi.</p>`;
+  }catch(e){$('fStatus').textContent='Nahi ho paya: '+e.message}
+  $('fGo').disabled=false;
+}
+$('fGo').onclick=fScan;
+
+buildCats();loadNews();chips();run();brief();
 </script>
 </body>
 </html>
