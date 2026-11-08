@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Subah ki Stock Report</title>
+<style>
+:root{--bg:#eef1f5;--panel:#fff;--ink:#14213d;--muted:#5b6577;--line:#d5dbe5;--accent:#1d4ed8;--up:#0f7b4a;--down:#c0332b;--warn:#a15c00;--flat:#6b7280}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1420;--panel:#161e2e;--ink:#e7ecf5;--muted:#98a3b8;--line:#26324a;--accent:#6b9bff;--up:#3ccf8e;--down:#ff7a70;--warn:#f0b04a;--flat:#9aa3b2}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.wrap{max-width:900px;margin:0 auto;padding:20px 14px 60px}
+h1{font-size:1.5rem;margin:0}
+h2{font-size:1.05rem;margin:22px 0 10px}
+.sub{color:var(--muted);margin:2px 0 14px}
+.panel,.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+.mood{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.up{color:var(--up)}.down{color:var(--down)}.flat{color:var(--flat)}.warn{color:var(--warn)}
+input[type=text],input[type=password]{padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;width:100%}
+button{font:inherit;padding:10px 14px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+button.p{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) button.p{color:#0e1420}}
+button:disabled{opacity:.6}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row input{flex:1 1 160px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:2px 4px 2px 10px;font-size:.85rem;display:inline-flex;align-items:center}
+.chip button{border:0;background:none;padding:0 8px;color:var(--muted);font-size:1.1rem}
+.head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.sym{font-weight:700;font-size:1.1rem}
+.price{font-weight:600}
+.badge{display:inline-block;border:1px solid currentColor;border-radius:999px;padding:1px 10px;font-size:.85rem;font-weight:600;margin:6px 0}
+ul{margin:6px 0;padding-left:18px}
+li{margin:2px 0}
+ul.news{list-style:none;padding:0;margin-top:10px}
+ul.news li{border-top:1px solid var(--line);padding:6px 0;font-size:.92rem}
+ul.news a{color:var(--ink);text-decoration:none}
+ul.news a:hover{text-decoration:underline;color:var(--accent)}
+.small{font-size:.82rem;color:var(--muted)}
+.ai{white-space:pre-wrap;border-left:3px solid var(--accent);padding:8px 12px;background:var(--bg);border-radius:0 6px 6px 0}
+.top{border-left:4px solid var(--up)}
+.risk{border-left:4px solid var(--down)}
+.notice{border:1px solid var(--warn);border-radius:8px;padding:10px 12px;font-size:.9rem;margin:10px 0}
+details{margin-top:8px}
+.lnk{border:0;background:none;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;font-weight:700;font-size:1.1rem}
+dialog{width:min(680px,94vw);max-height:88vh;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);padding:18px}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+dialog h3{margin:14px 0 4px;font-size:1rem}
+dialog p{margin:4px 0}
+.tbl{width:100%;border-collapse:collapse;font-size:.9rem}.tbl td{padding:3px 6px;border-top:1px solid var(--line)}
+summary{cursor:pointer;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Subah ki Stock Report</h1>
+  <p class="sub" id="date"></p>
+  <div class="notice"><b>Zaroori baat:</b> Ye sirf rules par based <b>sanket</b> hai, pakki bhavishyavani nahi. Koi bhi nahi bata sakta ki aaj kaunsa stock badhega. Kuch bhi kharidne se pehle khud jaanch lo. Ye investment salah nahi hai.</div>
+
+  <p class="small">Kisi bhi stock ke naam par click karo, company ki poori jaankari khulegi.</p>
+  <div class="panel mood" id="mood">Market ka haal la rahe hain...</div>
+
+  <div id="topBox"></div>
+  <div id="riskBox"></div>
+
+  <h2>Mere stocks</h2>
+  <div class="panel">
+    <div class="row">
+      <input id="sym" type="text" placeholder="NSE symbol, jaise TCS ya ZOMATO" autocapitalize="characters" aria-label="Stock symbol">
+      <button id="add">Jodo</button>
+      <button id="run" class="p">Report dobara banao</button>
+    </div>
+    <div class="chips" id="chips"></div>
+    <p class="small" id="status"></p>
+  </div>
+  <div id="out"></div>
+
+  <details class="panel">
+    <summary>AI summary (Grok, zaroori nahi)</summary>
+    <p class="small">Key daalne par Grok saare stocks ki khabron ka Hinglish mein chhota summary dega. Bina key ke bhi report poori chalti hai. Key sirf aapke browser mein save hoti hai, ise kabhi GitHub par mat likhna. xAI API paid hoti hai.</p>
+    <div class="row">
+      <input id="key" type="password" placeholder="xai-..." autocomplete="off" aria-label="Grok API key">
+      <input id="model" type="text" value="grok-4" aria-label="Model">
+      <button id="saveKey">Save</button>
+    </div>
+    <div class="row" style="margin-top:8px"><button id="ai">AI summary banao</button></div>
+    <div id="aiOut" style="margin-top:10px"></div>
+  </details>
+
+  <p class="small">Price Yahoo Finance se aata hai (kuch minute late ho sakta hai) aur khabar Google News se. Free proxy kabhi slow ho sakte hain, tab dobara try karo.</p>
+</div>
+
+<dialog id="dlg"><div id="dbody"></div><p><button id="dclose" class="p">Band karo</button></p></dialog>
+<script>
+const $=id=>document.getElementById(id);
+const S={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>n.toLocaleString('en-IN',{maximumFractionDigits:2});
+
+let watch;try{watch=JSON.parse(S.get('watch','null'))}catch(e){}
+if(!Array.isArray(watch))watch=['TCS','INFY','RELIANCE','HDFCBANK','ICICIBANK','SBIN','ITC','TATASTEEL'];
+let results=[];
+
+$('date').textContent=new Date().toLocaleDateString('hi-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+function chips(){$('chips').innerHTML=watch.map(s=>`<span class="chip">${esc(s)}<button data-s="${esc(s)}" aria-label="${esc(s)} hatao">×</button></span>`).join('')}
+$('chips').onclick=e=>{const s=e.target.dataset&&e.target.dataset.s;if(!s)return;watch=watch.filter(x=>x!==s);S.set('watch',JSON.stringify(watch));chips()};
+function add(){const s=$('sym').value.trim().toUpperCase().replace(/\.NS$/,'').replace(/[^A-Z0-9&-]/g,'');if(s&&!watch.includes(s)){watch.push(s);S.set('watch',JSON.stringify(watch));chips()}$('sym').value=''}
+$('add').onclick=add;$('sym').onkeydown=e=>{if(e.key==='Enter')add()};
+
+const PROXY=[u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),u=>'https://corsproxy.io/?'+encodeURIComponent(u)];
+async function chart(t,range='4mo',iv='1d'){
+  const url=`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(t)}?interval=${iv}&range=${range}`;
+  for(const p of PROXY){
+    try{
+      const r=await fetch(p(url));if(!r.ok)continue;
+      const j=await r.json();const R=j.chart.result[0],q=R.indicators.quote[0];
+      const c=[],v=[],tt=[];
+      q.close.forEach((x,i)=>{if(x!=null){c.push(x);v.push(q.volume[i]||0);tt.push(R.timestamp[i])}});
+      if(c.length>=2)return{c,v,tt,meta:R.meta};
+    }catch(e){}
+  }
+  return null;
+}
+async function news(t){
+  const rss=`https://news.google.com/rss/search?q=${encodeURIComponent(t+' share NSE')}&hl=en-IN&gl=IN&ceid=IN:en`;
+  try{const r=await fetch('https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(rss));const j=await r.json();
+    return(j.items||[]).slice(0,5).map(i=>({title:i.title,link:i.link}))}catch(e){return[]}
+}
+
+const sma=(a,n)=>a.length>=n?a.slice(-n).reduce((x,y)=>x+y,0)/n:null;
+function rsi(c,n=14){if(c.length<=n)return null;let g=0,l=0;for(let i=c.length-n;i<c.length;i++){const d=c[i]-c[i-1];d>0?g+=d:l-=d}if(l===0)return 100;const rs=(g/n)/(l/n);return 100-100/(1+rs)}
+
+const GOOD=['profit','upgrade','record','surge','jumps','wins','order win','dividend','buyback','rally','beats','growth','bags','gains'];
+const BAD=['loss','probe','fraud','downgrade','penalty','raid','lawsuit','court','slump','plunge','resign','notice','default','falls','cuts','scam','ban'];
+function newsScore(items){let g=0,b=0,hits=[];
+  items.forEach(n=>{const t=n.title.toLowerCase();GOOD.forEach(w=>{if(t.includes(w))g++});BAD.forEach(w=>{if(t.includes(w)){b++;hits.push(n.title)}})});
+  return{g,b,net:g-b,hits:[...new Set(hits)].slice(0,2)}}
+
+function analyze(d,ns){
+  const c=d.c,v=d.v,last=c[c.length-1],prev=c[c.length-2],chg=last-prev,pct=chg/prev*100;
+  const m20=sma(c,20),m50=sma(c,50),r=rsi(c),vAvg=sma(v.slice(0,-1),20),vr=vAvg?v[v.length-1]/vAvg:null;
+  const c5=c.length>5?(last/c[c.length-6]-1)*100:null;
+  let s=0;const why=[];
+  const add=(pts,txt)=>{s+=pts;why.push({pts,txt})};
+  if(m20!=null)last>m20?add(1,'Price 20 din ke average se upar hai (achha sanket)'):add(-1,'Price 20 din ke average se neeche hai');
+  if(m20!=null&&m50!=null)m20>m50?add(1,'Chhota trend bade trend se upar hai'):add(-1,'Chhota trend bade trend se neeche hai');
+  if(c5!=null)c5>0?add(1,`Pichhle 5 din mein ${c5.toFixed(1)}% badha`):add(-1,`Pichhle 5 din mein ${Math.abs(c5).toFixed(1)}% gira`);
+  if(r!=null){if(r>=50&&r<=68)add(1,`RSI ${r.toFixed(0)}: taakat hai par zyada garam nahi`);else if(r>70)add(-1,`RSI ${r.toFixed(0)}: bahut tezi se chadha, girne ka khatra`);else if(r<40)add(-1,`RSI ${r.toFixed(0)}: kamzor`);else why.push({pts:0,txt:`RSI ${r.toFixed(0)}: beech ka`})}
+  if(vr!=null&&vr>1.3)pct>=0?add(1,`Volume normal se ${vr.toFixed(1)} guna, saath mein price upar`):add(-1,`Volume normal se ${vr.toFixed(1)} guna, saath mein price neeche`);
+  if(ns.net>=1)add(1,'Khabron mein achhe shabd zyada hain');else if(ns.net<=-1)add(-1,'Khabron mein bure shabd zyada hain');
+  let label,cls;
+  if(s>=3){label='Upar ja sakta hai (sanket mazboot)';cls='up'}
+  else if(s>=1){label='Thoda positive';cls='up'}
+  else if(s>=-1){label='Neutral, ruk ke dekho';cls='flat'}
+  else{label='Kamzor, savdhan raho';cls='down'}
+  return{last,chg,pct,m20,m50,r,vr,s,why,label,cls}
+}
+
+function card(x){
+  const a=x.a,n=x.news,sign=a?(a.chg>0?'+':''):'';
+  let h=`<article class="card"><div class="head"><button class="lnk" data-s="${esc(x.sym)}" title="Company ki jaankari">${esc(x.sym)} ▸</button>`;
+  h+=a?`<span><span class="price">₹${fmt(a.last)}</span> <span class="${a.chg>=0?'up':'down'}">${sign}${a.chg.toFixed(2)} (${sign}${a.pct.toFixed(2)}%)</span></span>`:`<span class="down">Price abhi nahi mila</span>`;
+  h+=`</div>`;
+  if(a){
+    h+=`<span class="badge ${a.cls}">${esc(a.label)} (score ${a.s>0?'+':''}${a.s})</span>`;
+    if(x.ns.hits.length)h+=`<div class="warn"><b>Khabar se savdhan:</b> ${x.ns.hits.map(esc).join(' | ')}</div>`;
+    h+=`<ul>${a.why.map(w=>`<li class="${w.pts>0?'up':w.pts<0?'down':'flat'}">${esc(w.txt)}</li>`).join('')}</ul>`;
+    h+=`<div class="small">20 din avg: ${a.m20?fmt(a.m20):'-'} | 50 din avg: ${a.m50?fmt(a.m50):'-'} | RSI: ${a.r?a.r.toFixed(0):'-'}</div>`;
+  }
+  h+=n.length?`<ul class="news">${n.map(i=>`<li><a href="${esc(i.link)}" target="_blank" rel="noopener noreferrer">${esc(i.title)}</a></li>`).join('')}</ul>`:`<p class="small">Taaza khabar nahi mili.</p>`;
+  return h+`</article>`;
+}
+
+function summary(){
+  const ok=results.filter(x=>x.a);
+  const top=[...ok].filter(x=>!x.ns.hits.length&&x.a.s>=1).sort((p,q)=>q.a.s-p.a.s).slice(0,3);
+  const risk=ok.filter(x=>x.a.s<=-2||x.ns.hits.length);
+  $('topBox').innerHTML=`<h2>Aaj dhyan dene layak</h2><div class="card top">`+(top.length?top.map(x=>`<div><button class="lnk" data-s="${esc(x.sym)}">${esc(x.sym)}</button> ₹${fmt(x.a.last)}: <span class="${x.a.cls}">${esc(x.a.label)}</span></div>`).join(''):`<span class="small">Aaj kisi stock mein saaf sanket nahi hai. Jabardasti kuch dhoondhne ki zaroorat nahi, ruk jana bhi ek faisla hai.</span>`)+`</div>`;
+  $('riskBox').innerHTML=risk.length?`<h2>Savdhan raho</h2><div class="card risk">`+risk.map(x=>`<div><b>${esc(x.sym)}</b>: ${x.ns.hits.length?'bure khabar ke sanket':esc(x.a.label)}</div>`).join('')+`</div>`:'';
+}
+
+async function mood(){
+  const d=await chart('^NSEI');
+  if(!d){$('mood').textContent='Nifty ka data abhi nahi mila.';return}
+  const a=analyze(d,{net:0,b:0,g:0,hits:[]}),sg=a.chg>0?'+':'';
+  $('mood').innerHTML=`<span><b>Nifty 50</b> ${fmt(a.last)}</span><span class="${a.chg>=0?'up':'down'}">${sg}${a.chg.toFixed(2)} (${sg}${a.pct.toFixed(2)}%)</span><span class="small">Market ka trend: ${a.cls==='up'?'achha':a.cls==='down'?'kamzor':'beech ka'}</span>`;
+}
+
+async function run(){
+  if(!watch.length){$('status').textContent='Pehle kam se kam ek stock jodo.';return}
+  $('run').disabled=true;$('out').innerHTML='';$('topBox').innerHTML='';$('riskBox').innerHTML='';
+  $('status').textContent='Data la rahe hain, thoda wait karo...';
+  mood();
+  results=await Promise.all(watch.map(async sym=>{
+    const [d,n]=await Promise.all([chart(sym+'.NS'),news(sym)]);
+    const ns=newsScore(n);
+    return{sym,news:n,ns,name:(d&&d.meta&&(d.meta.longName||d.meta.shortName))||sym,a:d?analyze(d,ns):null};
+  }));
+  results.sort((p,q)=>(q.a?q.a.s:-99)-(p.a?p.a.s:-99));
+  summary();
+  $('out').innerHTML=results.map(card).join('');
+  $('status').textContent='Report taiyaar: '+new Date().toLocaleTimeString('en-IN');
+  $('run').disabled=false;
+}
+$('run').onclick=run;
+
+$('key').value=S.get('grokKey','');$('model').value=S.get('grokModel','grok-4');
+$('saveKey').onclick=()=>{S.set('grokKey',$('key').value.trim());S.set('grokModel',$('model').value.trim()||'grok-4');$('aiOut').textContent='Save ho gaya.'};
+$('ai').onclick=async()=>{
+  const key=S.get('grokKey','');
+  if(!key){$('aiOut').textContent='Pehle Grok key daalke Save karo.';return}
+  if(!results.length){$('aiOut').textContent='Pehle report banne do.';return}
+  $('ai').disabled=true;$('aiOut').textContent='Grok soch raha hai...';
+  const body=results.filter(x=>x.a).map(x=>`${x.sym}: ${x.a.pct.toFixed(1)}% aaj, score ${x.a.s}\n`+x.news.slice(0,4).map(n=>'- '+n.title).join('\n')).join('\n\n');
+  try{
+    const r=await fetch('https://api.x.ai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({model:S.get('grokModel','grok-4'),temperature:.3,messages:[
+        {role:'system',content:'Tum ek beginner ke liye stock khabar samjhane wale ho. Sirf diye gaye headlines par bharosa karo, kuch invent mat karo, kharidne-bechne ki salah mat do.'},
+        {role:'user',content:'Har stock ke liye Hinglish mein 1-2 saral line likho ki khabron ka kya matlab hai, aur kisi ko savdhan rehna ho to batao.\n\n'+body}]})});
+    if(!r.ok)throw new Error('Grok error '+r.status);
+    const j=await r.json();$('aiOut').innerHTML='<div class="ai">'+esc(j.choices[0].message.content)+'</div>';
+  }catch(e){$('aiOut').innerHTML='<span class="down">'+esc(e.message)+'</span>'}
+  $('ai').disabled=false;
+};
+
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const wj=async u=>(await fetch(u)).json();
+async function wiki(name){
+  const nm=name.replace(/\s+(Limited|Ltd\.?)$/i,'');
+  const j=await wj(`https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(nm+' India company')}&gsrlimit=1&prop=extracts|pageprops&exintro=1&explaintext=1&exsentences=5&format=json&origin=*`);
+  const pg=Object.values(j.query.pages)[0],out={title:pg.title,text:pg.extract,ceos:[],year:null};
+  const q=pg.pageprops&&pg.pageprops.wikibase_item;
+  if(q){try{
+    const e=(await wj(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${q}&props=claims&format=json&origin=*`)).entities[q].claims;
+    const yr=t=>t&&t.mainsnak&&t.mainsnak.datavalue?String(t.mainsnak.datavalue.value.time).slice(1,5):null;
+    if(e.P571)out.year=yr(e.P571[0]);
+    const c=(e.P169||[]).map(x=>({id:x.mainsnak.datavalue&&x.mainsnak.datavalue.value.id,from:x.qualifiers&&x.qualifiers.P580?yr(x.qualifiers.P580[0]):'?',to:x.qualifiers&&x.qualifiers.P582?yr(x.qualifiers.P582[0]):null})).filter(x=>x.id);
+    if(c.length){const L=(await wj(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${[...new Set(c.map(x=>x.id))].join('|')}&props=labels&languages=en&format=json&origin=*`)).entities;
+      out.ceos=c.map(x=>({n:L[x.id].labels.en?L[x.id].labels.en.value:x.id,from:x.from,to:x.to}))}
+  }catch(e){}}
+  return out;
+}
+async function hist(sym){
+  const d=await chart(sym+'.NS','max','1mo');if(!d)return null;
+  const c=d.c,t=d.tt,yr={},mo=Array.from({length:12},()=>[]);
+  for(let i=1;i<c.length;i++){const dt=new Date(t[i]*1000),y=dt.getUTCFullYear();mo[dt.getUTCMonth()].push(c[i]/c[i-1]-1);yr[y]=c[i]}
+  const ys=Object.keys(yr).map(Number).sort(),ret=[];
+  ys.forEach((y,i)=>{const base=i?yr[ys[i-1]]:c[0];ret.push({y,r:(yr[y]/base-1)*100})});
+  const ma=mo.map((a,i)=>({m:MON[i],avg:a.length?a.reduce((x,y)=>x+y,0)/a.length*100:0,win:a.length?a.filter(z=>z>0).length/a.length*100:0,n:a.length}));
+  return{ret,ma,first:new Date(t[0]*1000).getUTCFullYear(),loss:ret.filter(x=>x.r<0)};
+}
+async function fin(sym){
+  const u=`https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/${sym}.NS?type=annualNetIncome,annualTotalRevenue&merge=false&period1=0&period2=${Math.floor(Date.now()/1000)}`;
+  for(const p of PROXY){try{const r=await fetch(p(u));if(!r.ok)continue;const j=await r.json();const o={};
+    j.timeseries.result.forEach(x=>{const k=x.meta.type[0];o[k]=(x[k]||[]).map(i=>({d:i.asOfDate.slice(0,4),v:i.reportedValue.raw}))});
+    if(o.annualNetIncome&&o.annualNetIncome.length)return o}catch(e){}}
+  return null;
+}
+const cr=v=>'₹'+fmt(v/1e7)+' Cr';
+async function openDetails(sym){
+  const x=results.find(r=>r.sym===sym),name=x?x.name:sym;
+  $('dbody').innerHTML=`<h2 style="margin-top:0">${esc(name)} <span class="small">(${esc(sym)})</span></h2><p class="small">Jaankari la rahe hain...</p>`;
+  $('dlg').showModal();
+  const [w,h,f]=await Promise.all([wiki(name).catch(()=>null),hist(sym).catch(()=>null),fin(sym).catch(()=>null)]);
+  let o=`<h2 style="margin-top:0">${esc(name)} <span class="small">(${esc(sym)})</span></h2>`;
+  o+=`<h3>Company kya karti hai</h3>`+(w&&w.text?`<p>${esc(w.text)}</p><p class="small">Source: Wikipedia, "${esc(w.title)}". Page galat company ka lage to ise na maano.</p>`:`<p class="small">Jaankari nahi mili.</p>`);
+  o+=`<h3>Kab shuru hui</h3><p>${w&&w.year?'Company ki sthapana: <b>'+esc(w.year)+'</b> (Wikidata)':'Sthapana ka saal nahi mila.'}</p>`;
+  if(h)o+=`<p class="small">Share ka data Yahoo par ${h.first} se hai (share market mein tabhi se ya usse kuch baad).</p>`;
+  o+=`<h3>CEO</h3>`+(w&&w.ceos.length?`<p>Ab tak ke CEO (Wikidata mein jitne darj hain): <b>${w.ceos.length}</b></p><table class="tbl">${w.ceos.map(c=>`<tr><td>${esc(c.n)}</td><td>${esc(c.from)} se ${c.to?esc(c.to)+' tak':'abhi tak'}</td></tr>`).join('')}</table>`:`<p class="small">CEO ki list nahi mili.</p>`);
+  o+=`<h3>Company ka munafa ya ghata (saal ke hisaab se)</h3>`;
+  if(f){const ni=f.annualNetIncome,rev=f.annualTotalRevenue||[],ls=ni.filter(i=>i.v<0).length;
+    o+=`<p>Jitne saal ka data mila (${ni.length}), unme ghata hua: <b>${ls}</b> baar.</p><table class="tbl">${ni.map(i=>{const rv=rev.find(z=>z.d===i.d);return`<tr><td>${esc(i.d)}</td><td class="${i.v<0?'down':'up'}">${i.v<0?'Ghata':'Munafa'} ${cr(Math.abs(i.v))}</td><td class="small">${rv?'Kamai '+cr(rv.v):''}</td></tr>`}).join('')}</table><p class="small">Free source mein aam taur par sirf pichhle kuch saal ka data hota hai.</p>`}
+  else o+=`<p class="small">Company ke profit-loss ka data free source se nahi mila.</p>`;
+  o+=`<h3>Share ka bhaav kaisa raha</h3>`;
+  if(h){const b=[...h.ret].sort((p,q)=>q.r-p.r)[0],wst=[...h.ret].sort((p,q)=>p.r-q.r)[0],ms=[...h.ma].sort((p,q)=>q.avg-p.avg);
+    o+=`<p>${h.ret.length} saalon mein share <b class="down">${h.loss.length}</b> saal gira (kuch saal adhoore bhi hote hain). Sabse achha saal ${b.y} (+${b.r.toFixed(0)}%), sabse bura ${wst.y} (${wst.r.toFixed(0)}%).</p>`;
+    o+=`<p>Mahine ke hisaab se aksar sabse zyada badhta hai: <b class="up">${ms[0].m}</b> (average ${ms[0].avg.toFixed(1)}%) aur <b class="up">${ms[1].m}</b>. Sabse kamzor: <b class="down">${ms[11].m}</b> (average ${ms[11].avg.toFixed(1)}%).</p>`;
+    o+=`<table class="tbl">${h.ma.map(m=>`<tr><td>${m.m}</td><td class="${m.avg>=0?'up':'down'}">${m.avg>=0?'+':''}${m.avg.toFixed(1)}%</td><td class="small">${m.win.toFixed(0)}% baar badha (${m.n} saal)</td></tr>`).join('')}</table><p class="small">Ye purana record hai, aage bhi aisa hoga ye zaroori nahi.</p>`}
+  else o+=`<p class="small">Purana data nahi mila.</p>`;
+  $('dbody').innerHTML=o;
+}
+document.addEventListener('click',e=>{const b=e.target.closest('.lnk[data-s]');if(b)openDetails(b.dataset.s)});
+$('dclose').onclick=()=>$('dlg').close();
+chips();run();
+</script>
+</body>
+</html>
