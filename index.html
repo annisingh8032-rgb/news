@@ -3,94 +3,86 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Subah ki Stock Report</title>
+<title>Stock Desk</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#6d5bd0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Stock Desk">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
-:root{--bg:#eef1f5;--panel:#fff;--ink:#14213d;--muted:#5b6577;--line:#d5dbe5;--accent:#1d4ed8;--up:#0f7b4a;--down:#c0332b;--warn:#a15c00;--flat:#6b7280}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1420;--panel:#161e2e;--ink:#e7ecf5;--muted:#98a3b8;--line:#26324a;--accent:#6b9bff;--up:#3ccf8e;--down:#ff7a70;--warn:#f0b04a;--flat:#9aa3b2}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
-.wrap{max-width:900px;margin:0 auto;padding:20px 14px 60px}
-h1{font-size:1.5rem;margin:0}
-h2{font-size:1.05rem;margin:22px 0 10px}
-.sub{color:var(--muted);margin:2px 0 14px}
-.panel,.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
-.mood{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+:root{--bg:#f4f1fb;--panel:#fff;--ink:#241f3a;--muted:#6f6a85;--line:#e6e1f3;--p:#6d5bd0;--p2:#8f7ff0;--up:#12805a;--down:#c43d33;--warn:#a15c00;--flat:#7a7690;--sh:0 4px 18px rgba(80,60,160,.08)}
+@media (prefers-color-scheme:dark){:root{--bg:#120f20;--panel:#1c1830;--ink:#ece9f8;--muted:#a29dbd;--line:#2d2749;--p:#9a8cff;--p2:#7b6cf0;--up:#3ccf8e;--down:#ff7a70;--warn:#f0b04a;--flat:#a29dbd;--sh:none}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:15.5px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.app{max-width:640px;margin:0 auto;min-height:100vh;padding:calc(env(safe-area-inset-top,0px) + 14px) 14px calc(env(safe-area-inset-bottom,0px) + 88px)}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.hi{font-size:1.25rem;font-weight:700}
+.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;display:grid;place-items:center;font-weight:700}
+.tab{display:none}.tab.on{display:block}
+h2{font-size:1.02rem;margin:20px 0 8px}h3{font-size:.95rem;margin:14px 0 4px}
+.hero{background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;border-radius:20px;padding:18px;box-shadow:var(--sh)}
+.hero .mood{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:1.05rem}
+.hero .up{color:#a8f3cf}.hero .down{color:#ffc0b9}.hero .small{color:#e8e3ff}
+.card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:var(--sh)}
+.top{border-left:4px solid var(--up)}.risk{border-left:4px solid var(--down)}
+.notice{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:10px 12px;font-size:.84rem;color:var(--muted);margin:12px 0}
 .up{color:var(--up)}.down{color:var(--down)}.flat{color:var(--flat)}.warn{color:var(--warn)}
-input[type=text],input[type=password]{padding:10px 12px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;width:100%}
-button{font:inherit;padding:10px 14px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
-button.p{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) button.p{color:#0e1420}}
+.small{font-size:.8rem;color:var(--muted)}
+input,select{padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit;width:100%;margin-bottom:8px}
+button{font:inherit;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+button.p{background:var(--p);border-color:var(--p);color:#fff;font-weight:600}
+@media (prefers-color-scheme:dark){button.p{color:#120f20}}
 button:disabled{opacity:.6}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.row input{flex:1 1 160px}
+:focus-visible{outline:2px solid var(--p);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row input{flex:1 1 150px;margin:0}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-.chip{border:1px solid var(--line);border-radius:999px;padding:2px 4px 2px 10px;font-size:.85rem;display:inline-flex;align-items:center}
+.chip{border:1px solid var(--line);border-radius:999px;padding:2px 4px 2px 10px;font-size:.84rem;display:inline-flex;align-items:center}
 .chip button{border:0;background:none;padding:0 8px;color:var(--muted);font-size:1.1rem}
 .head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
-.sym{font-weight:700;font-size:1.1rem}
+.lnk{border:0;background:none;padding:0;color:var(--p);cursor:pointer;font-weight:700;font-size:1.08rem}
 .price{font-weight:600}
-.badge{display:inline-block;border:1px solid currentColor;border-radius:999px;padding:1px 10px;font-size:.85rem;font-weight:600;margin:6px 0}
-ul{margin:6px 0;padding-left:18px}
-li{margin:2px 0}
-ul.news{list-style:none;padding:0;margin-top:10px}
-ul.news li{border-top:1px solid var(--line);padding:6px 0;font-size:.92rem}
-ul.news a{color:var(--ink);text-decoration:none}
-ul.news a:hover{text-decoration:underline;color:var(--accent)}
-.small{font-size:.82rem;color:var(--muted)}
-.ai{white-space:pre-wrap;border-left:3px solid var(--accent);padding:8px 12px;background:var(--bg);border-radius:0 6px 6px 0}
-.top{border-left:4px solid var(--up)}
-.risk{border-left:4px solid var(--down)}
-.notice{border:1px solid var(--warn);border-radius:8px;padding:10px 12px;font-size:.9rem;margin:10px 0}
-details{margin-top:8px}
-.lnk{border:0;background:none;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;font-weight:700;font-size:1.1rem}
-dialog{width:min(680px,94vw);max-height:88vh;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);padding:18px}
-dialog::backdrop{background:rgba(0,0,0,.5)}
-dialog h3{margin:14px 0 4px;font-size:1rem}
+.badge{display:inline-block;border:1px solid currentColor;border-radius:999px;padding:1px 10px;font-size:.82rem;font-weight:600;margin:6px 0}
+ul{margin:6px 0;padding-left:18px}li{margin:2px 0}
+ul.news{list-style:none;padding:0;margin-top:8px}
+ul.news li{border-top:1px solid var(--line);padding:7px 0;font-size:.9rem}
+ul.news a,.hl a{color:var(--ink);text-decoration:none}
+.hl{padding:9px 0;border-top:1px solid var(--line);font-size:.92rem}.hl b{color:var(--p)}
+.ai{white-space:pre-wrap;border-left:3px solid var(--p);padding:8px 12px;background:var(--bg);border-radius:0 10px 10px 0;margin-top:10px}
+.nav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-around;background:var(--panel);border-top:1px solid var(--line);padding:8px 8px calc(env(safe-area-inset-bottom,0px) + 8px);z-index:5}
+.nav button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:0;font-size:.72rem;color:var(--muted);padding:4px 14px;border-radius:12px}
+.nav button span{font-size:1.25rem;line-height:1.2}
+.nav button.on{color:var(--p);font-weight:700}
+dialog{width:min(640px,94vw);max-height:88vh;overflow:auto;border:1px solid var(--line);border-radius:18px;background:var(--panel);color:var(--ink);padding:18px}
+dialog::backdrop{background:rgba(20,10,50,.55)}
 dialog p{margin:4px 0}
-.tbl{width:100%;border-collapse:collapse;font-size:.9rem}.tbl td{padding:3px 6px;border-top:1px solid var(--line)}
-summary{cursor:pointer;color:var(--muted)}
+.tbl{width:100%;border-collapse:collapse;font-size:.88rem}.tbl td{padding:3px 6px;border-top:1px solid var(--line)}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>Subah ki Stock Report</h1>
-  <p class="sub" id="date"></p>
-  <div class="notice"><b>Zaroori baat:</b> Ye sirf rules par based <b>sanket</b> hai, pakki bhavishyavani nahi. Koi bhi nahi bata sakta ki aaj kaunsa stock badhega. Kuch bhi kharidne se pehle khud jaanch lo. Ye investment salah nahi hai.</div>
-
-  <p class="small">Kisi bhi stock ke naam par click karo, company ki poori jaankari khulegi.</p>
-  <div class="panel mood" id="mood">Market ka haal la rahe hain...</div>
-
-  <div id="topBox"></div>
-  <div id="riskBox"></div>
-
-  <h2>Mere stocks</h2>
-  <div class="panel">
-    <div class="row">
-      <input id="sym" type="text" placeholder="NSE symbol, jaise TCS ya ZOMATO" autocapitalize="characters" aria-label="Stock symbol">
-      <button id="add">Jodo</button>
-      <button id="run" class="p">Report dobara banao</button>
-    </div>
-    <div class="chips" id="chips"></div>
-    <p class="small" id="status"></p>
-  </div>
+<div class="app">
+<header class="topbar"><div><div class="hi">Namaste 👋</div><div class="small" id="date"></div></div><div class="logo">SD</div></header>
+<main>
+<section id="t-home" class="tab on">
+  <div class="hero"><div class="small">Aaj ka Nifty 50</div><div class="mood" id="mood">Market ka haal la rahe hain...</div></div>
+  <div class="notice"><b>Dhyan do:</b> Ye sirf rules par based sanket hai, pakki bhavishyavani nahi. Kharidne se pehle khud jaanch lo. Ye investment salah nahi hai.</div>
+  <div id="topBox"></div><div id="riskBox"></div>
+</section>
+<section id="t-stocks" class="tab">
+  <div class="panel"><div class="row"><input id="sym" type="text" placeholder="NSE symbol, jaise TCS" autocapitalize="characters" aria-label="Stock symbol"><button id="add">Jodo</button><button id="run" class="p">Refresh</button></div><div class="chips" id="chips"></div><p class="small" id="status"></p></div>
+  <p class="small">Stock ke naam par tap karo, company ki jaankari khulegi.</p>
   <div id="out"></div>
-
-  <details class="panel">
-    <summary>AI summary (Grok, zaroori nahi)</summary>
-    <p class="small">Key daalne par Grok saare stocks ki khabron ka Hinglish mein chhota summary dega. Bina key ke bhi report poori chalti hai. Key sirf aapke browser mein save hoti hai, ise kabhi GitHub par mat likhna. xAI API paid hoti hai.</p>
-    <div class="row">
-      <input id="key" type="password" placeholder="xai-..." autocomplete="off" aria-label="Grok API key">
-      <input id="model" type="text" value="grok-4" aria-label="Model">
-      <button id="saveKey">Save</button>
-    </div>
-    <div class="row" style="margin-top:8px"><button id="ai">AI summary banao</button></div>
-    <div id="aiOut" style="margin-top:10px"></div>
-  </details>
-
-  <p class="small">Price Yahoo Finance se aata hai (kuch minute late ho sakta hai) aur khabar Google News se. Free proxy kabhi slow ho sakte hain, tab dobara try karo.</p>
+</section>
+<section id="t-news" class="tab"><h2>Aaj ki headlines</h2><div class="panel" id="newsList">Pehle report banne do.</div></section>
+<section id="t-report" class="tab">
+  <h2>Grok report aur chart (code.gs se)</h2>
+  <div class="panel"><p class="small">code.gs ko Web App deploy karke link aur ACCESS_KEY yahan daalo. Grok key sirf code.gs ke Script Properties mein rehti hai, is page ya GitHub mein nahi.</p>
+    <input id="gUrl" type="text" placeholder="https://script.google.com/macros/s/.../exec" aria-label="Web App link"><input id="gKey" type="password" placeholder="ACCESS_KEY" aria-label="Access key"><button id="gSave">Save</button></div>
+  <div class="panel"><div class="row"><button id="gReport" class="p">Grok report lo</button><button id="gPush">Telegram par bhejo</button></div><div id="rOut"></div></div>
+  <div class="panel"><h3 style="margin-top:0">Company ka chart record</h3><input id="rSym" type="text" placeholder="Symbol, jaise TCS" autocapitalize="characters"><select id="rRange"><option value="1mo">1 mahina</option><option value="6mo" selected>6 mahine</option><option value="1y">1 saal</option><option value="5y">5 saal</option></select><div class="row"><button id="gChart">Dekho</button><button id="gCsv">CSV download</button></div><div id="cOut"></div></div>
+</section>
+</main>
+<nav class="nav"><button data-t="home" class="on"><span>⌂</span>Home</button><button data-t="stocks"><span>◫</span>Stocks</button><button data-t="news"><span>☰</span>News</button><button data-t="report"><span>✦</span>Report</button></nav>
 </div>
-
 <dialog id="dlg"><div id="dbody"></div><p><button id="dclose" class="p">Band karo</button></p></dialog>
 <script>
 const $=id=>document.getElementById(id);
@@ -200,30 +192,33 @@ async function run(){
   }));
   results.sort((p,q)=>(q.a?q.a.s:-99)-(p.a?p.a.s:-99));
   summary();
-  $('out').innerHTML=results.map(card).join('');
+  $('out').innerHTML=results.map(card).join('');renderNews();
   $('status').textContent='Report taiyaar: '+new Date().toLocaleTimeString('en-IN');
   $('run').disabled=false;
 }
 $('run').onclick=run;
 
-$('key').value=S.get('grokKey','');$('model').value=S.get('grokModel','grok-4');
-$('saveKey').onclick=()=>{S.set('grokKey',$('key').value.trim());S.set('grokModel',$('model').value.trim()||'grok-4');$('aiOut').textContent='Save ho gaya.'};
-$('ai').onclick=async()=>{
-  const key=S.get('grokKey','');
-  if(!key){$('aiOut').textContent='Pehle Grok key daalke Save karo.';return}
-  if(!results.length){$('aiOut').textContent='Pehle report banne do.';return}
-  $('ai').disabled=true;$('aiOut').textContent='Grok soch raha hai...';
-  const body=results.filter(x=>x.a).map(x=>`${x.sym}: ${x.a.pct.toFixed(1)}% aaj, score ${x.a.s}\n`+x.news.slice(0,4).map(n=>'- '+n.title).join('\n')).join('\n\n');
-  try{
-    const r=await fetch('https://api.x.ai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify({model:S.get('grokModel','grok-4'),temperature:.3,messages:[
-        {role:'system',content:'Tum ek beginner ke liye stock khabar samjhane wale ho. Sirf diye gaye headlines par bharosa karo, kuch invent mat karo, kharidne-bechne ki salah mat do.'},
-        {role:'user',content:'Har stock ke liye Hinglish mein 1-2 saral line likho ki khabron ka kya matlab hai, aur kisi ko savdhan rehna ho to batao.\n\n'+body}]})});
-    if(!r.ok)throw new Error('Grok error '+r.status);
-    const j=await r.json();$('aiOut').innerHTML='<div class="ai">'+esc(j.choices[0].message.content)+'</div>';
-  }catch(e){$('aiOut').innerHTML='<span class="down">'+esc(e.message)+'</span>'}
-  $('ai').disabled=false;
-};
+
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav button,.tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('t-'+b.dataset.t).classList.add('on');scrollTo(0,0)});
+function renderNews(){const h=[];results.forEach(x=>x.news.slice(0,3).forEach(n=>h.push(`<div class="hl"><b>${esc(x.sym)}</b> <a href="${esc(n.link)}" target="_blank" rel="noopener noreferrer">${esc(n.title)}</a></div>`)));$('newsList').innerHTML=h.length?h.join(''):'Koi headline nahi mili.'}
+$('gUrl').value=S.get('gUrl','');$('gKey').value=S.get('gKey','');
+$('gSave').onclick=()=>{S.set('gUrl',$('gUrl').value.trim());S.set('gKey',$('gKey').value.trim());$('rOut').textContent='Save ho gaya.'};
+function gas(p){const u=new URL(S.get('gUrl',''));Object.entries({...p,key:S.get('gKey','')}).forEach(([k,v])=>u.searchParams.set(k,v));return u.toString()}
+async function gcall(p,box,json){
+  if(!S.get('gUrl','')){box.textContent='Pehle Web App ka link aur key Save karo.';return null}
+  box.textContent='Wait karo...';
+  try{const r=await fetch(gas(p));const t=await r.text();box.textContent='';return json?JSON.parse(t):t}catch(e){box.innerHTML='<span class="down">Nahi ho paya: '+esc(e.message)+'</span>';return null}
+}
+$('gReport').onclick=async()=>{const t=await gcall({action:'report'},$('rOut'));if(t)$('rOut').innerHTML='<div class="ai">'+esc(t)+'</div>'};
+$('gPush').onclick=async()=>{const t=await gcall({action:'push'},$('rOut'));if(t)$('rOut').textContent=t};
+async function chartRows(){const sy=$('rSym').value.trim().toUpperCase();if(!sy){$('cOut').textContent='Symbol likho.';return null}
+  const j=await gcall({action:'chart',symbol:sy,range:$('rRange').value},$('cOut'),true);if(j&&j.error){$('cOut').textContent=j.error;return null}return j&&{sy,rows:j}}
+$('gChart').onclick=async()=>{const r=await chartRows();if(!r)return;const L=r.rows.slice(-15).reverse();
+  $('cOut').innerHTML=`<p class="small">${esc(r.sy)}: ${r.rows.length} din ka record, last 15 neeche.</p><table class="tbl">${L.map(x=>`<tr><td>${esc(x.d)}</td><td>₹${fmt(x.c)}</td><td class="small">${fmt(x.v)}</td></tr>`).join('')}</table>`};
+$('gCsv').onclick=async()=>{const r=await chartRows();if(!r)return;
+  const c='Date,Open,High,Low,Close,Volume\n'+r.rows.map(x=>[x.d,x.o,x.h,x.l,x.c,x.v].join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:'text/csv'}));a.download=r.sy+'_'+$('rRange').value+'.csv';a.click();$('cOut').textContent='CSV download ho gayi.'};
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const wj=async u=>(await fetch(u)).json();
